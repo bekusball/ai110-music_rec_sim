@@ -17,17 +17,12 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-Explain your design in plain language.
-
-Some prompts to answer:
-
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
-
-You can include a simple diagram or bullet list if helpful.
+- **Planned design:** Match each song's genre, mood, and energy to the user's preferences.
+- **User profile:** Stores favorite genre, favorite mood, target energy, and an acoustic preference (unused in this scoring rule).
+- **Genre score:** 4 points for an exact match, 2 for related genres (pop and indie pop), otherwise 0.
+- **Mood score:** 3 points for an exact match, 1.5 for related moods (chill, relaxed, and focused), otherwise 0.
+- **Energy score:** `3 * (1 - abs(song_energy - target_energy))`; both energy values range from 0 to 1, so closer matches earn more points.
+- **Recommendations:** Add the points for a score out of 10 and return the top `k` songs, highest score first. Break ties by closer energy, then lower song ID, and explain each recommendation.
 
 ---
 
@@ -35,31 +30,40 @@ You can include a simple diagram or bullet list if helpful.
 
 ### Setup
 
+Run these commands from the project folder.
+
 1. Create a virtual environment (optional but recommended):
 
    ```bash
    python -m venv .venv
-   source .venv/bin/activate      # Mac or Linux
-   .venv\Scripts\activate         # Windows
+   ```
+
+   Activate it using the command for your shell:
+
+   - Mac or Linux: `source .venv/bin/activate`
+   - Windows PowerShell: `.\.venv\Scripts\Activate.ps1`
 
 2. Install dependencies
 
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
 
 3. Run the app:
 
-```bash
-python -m src.main
-```
+   ```bash
+   python src/main.py
+   ```
+
+   The current starter code prints a loading message and `Top recommendations:`,
+   but no songs. CSV loading, scoring, and ranking are not implemented yet.
 
 ### Running Tests
 
 Run the starter tests with:
 
 ```bash
-pytest
+python -m pytest
 ```
 
 You can add more tests in `tests/test_recommender.py`.

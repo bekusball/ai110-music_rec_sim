@@ -1,0 +1,62 @@
+Implement the following agreed design for this project's simple content-based music recommender.
+
+First inspect the current source, tests, README, and any applicable project guidance. Keep the implementation small and understandable. This prompt authorizes the necessary implementation and focused tests; do not add a UI, new dependencies, machine learning, external services, or unrelated features.
+
+Goal
+Load the catalog from data/songs.csv and recommend songs using only genre, mood, and energy. Reward closer matches to the user's preferences with a score from 0 to 10.
+
+Scoring rule
+1. Genre (maximum 4 points):
+   - Exact match: 4 points.
+   - Related genre: 2 points.
+   - Otherwise: 0 points.
+   - The only related pair is pop <-> indie pop (symmetric).
+2. Mood (maximum 3 points):
+   - Exact match: 3 points.
+   - Related mood: 1.5 points.
+   - Otherwise: 0 points.
+   - Any two different moods in {chill, relaxed, focused} are related.
+3. Energy (maximum 3 points):
+   - energy_points = 3 * (1 - abs(song_energy - preferred_energy)).
+   - Both energy values must be finite numbers between 0 and 1 inclusive.
+   - Reject invalid energy values with a clear ValueError rather than silently clamping them.
+
+Total score = genre_points + mood_points + energy_points.
+Exact and related points are alternatives, not cumulative bonuses. Normalize genre and mood labels by trimming whitespace and ignoring case. Do not infer additional related categories. This score measures preference match; it is not a probability of liking a song.
+
+Ranking
+- Sort by total score descending.
+- Break total-score ties by smaller absolute energy difference.
+- Break remaining ties by lower numeric song ID.
+- Return the top k songs; return all available songs if k exceeds the catalog size.
+- Return an empty list for an empty catalog or k <= 0.
+- Rank using unrounded scores; round only for display.
+
+Integrate with the existing code
+- Implement CSV loading in load_songs, converting ID to int and numeric musical attributes to floats.
+- Implement score_song(user_prefs, song) -> (float_score, list_of_reason_strings).
+- Implement recommend_songs(user_prefs, songs, k) -> a list of (song_dict, float_score, explanation_string) tuples.
+- Preserve the existing Song and UserProfile dataclasses and the Recommender class API used by the tests.
+- Recommender.recommend must use the same scoring and ranking rules and return Song objects.
+- Recommender.explain_recommendation must produce a meaningful explanation using the same scoring logic.
+- Share the scoring/ranking implementation between the dictionary and class APIs to avoid divergent behavior. Use small helpers or adapters rather than a broad redesign.
+- Map UserProfile.favorite_genre, favorite_mood, and target_energy to the functional API's genre, mood, and energy preferences.
+- Keep likes_acoustic for compatibility, but do not use it in scoring. Do not score tempo, valence, danceability, acousticness, artist, title, or ID; ID is only a final tie-breaker.
+- Make the documented command, python src/main.py from the project root, load the catalog and print actual recommendations with scores and explanations.
+- Explain exact, related, and nonmatching categories honestly, and include song energy versus preferred energy. For example: "Matches your pop genre and happy mood; energy 0.82 is close to your preferred 0.80."
+
+Acceptance examples
+For genre=pop, mood=happy, energy=0.80:
+- Sunrise City: 4 + 3 + 2.94 = 9.94 / 10.
+- Rooftop Lights: 2 + 3 + 2.88 = 7.88 / 10.
+- Gym Hero: 4 + 0 + 2.61 = 6.61 / 10.
+These three songs must rank in that order relative to each other.
+
+Verification
+Add focused tests for exact/related/unrelated categories, gradual energy scoring, the examples above (using approximate floating-point comparisons), ranking with deliberately shuffled input, both tie-breakers, empty input, k edge cases, invalid energy, CSV type conversion, and consistent results across the functional and class APIs. Check that explanations describe actual matches rather than returning placeholder text.
+Run the tests and the documented application command. If the Python environment prevents execution, report that limitation honestly instead of claiming the checks passed.
+
+Documentation and scope
+Minimally update the README to describe the implemented scoring and remove its now-obsolete placeholder-output warning. Leave the personal reflection templates in model_card.md and ai_interactions.md for the user to complete. Do not change the dataset or add dependencies. Do not commit or push changes.
+
+When finished, summarize what changed, the observed sample output, which checks passed, and any remaining limitations.
