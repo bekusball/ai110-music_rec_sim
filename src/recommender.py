@@ -1,3 +1,5 @@
+import csv
+
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 
@@ -47,12 +49,20 @@ class Recommender:
 
 def load_songs(csv_path: str) -> List[Dict]:
     """
-    Loads songs from a CSV file.
-    Required by src/main.py
+    Load song dictionaries with integer IDs and float musical attributes.
     """
-    # TODO: Implement CSV loading logic
-    print(f"Loading songs from {csv_path}...")
-    return []
+    songs = []
+    numeric_fields = ("energy", "tempo_bpm", "valence", "danceability", "acousticness")
+
+    with open(csv_path, newline="", encoding="utf-8") as csv_file:
+        for row in csv.DictReader(csv_file):
+            # CSV values are strings; convert numeric fields for scoring and ranking.
+            row["id"] = int(row["id"])
+            for field in numeric_fields:
+                row[field] = float(row[field])
+            songs.append(row)
+
+    return songs
 
 def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     """

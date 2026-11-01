@@ -1,4 +1,41 @@
-from src.recommender import Song, UserProfile, Recommender
+from src.recommender import Song, UserProfile, Recommender, load_songs
+
+
+def test_load_songs_preserves_text_and_converts_numeric_fields(tmp_path):
+    csv_path = tmp_path / "songs.csv"
+    csv_path.write_text(
+        "id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness\n"
+        '7,"Rain, Again",Beyoncé,pop,happy,0.82,118,0.84,0.79,0.18\n',
+        encoding="utf-8",
+    )
+
+    songs = load_songs(str(csv_path))
+
+    assert songs == [{
+        "id": 7,
+        "title": "Rain, Again",
+        "artist": "Beyoncé",
+        "genre": "pop",
+        "mood": "happy",
+        "energy": 0.82,
+        "tempo_bpm": 118.0,
+        "valence": 0.84,
+        "danceability": 0.79,
+        "acousticness": 0.18,
+    }]
+    assert isinstance(songs[0]["id"], int)
+    for field in ("energy", "tempo_bpm", "valence", "danceability", "acousticness"):
+        assert isinstance(songs[0][field], float)
+
+
+def test_load_songs_returns_empty_list_for_header_only_csv(tmp_path):
+    csv_path = tmp_path / "songs.csv"
+    csv_path.write_text(
+        "id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness\n",
+        encoding="utf-8",
+    )
+
+    assert load_songs(str(csv_path)) == []
 
 def make_small_recommender() -> Recommender:
     songs = [

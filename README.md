@@ -55,8 +55,9 @@ Run these commands from the project folder.
    python src/main.py
    ```
 
-   The current starter code prints a loading message and `Top recommendations:`,
-   but no songs. CSV loading, scoring, and ranking are not implemented yet.
+   The app loads the CSV and prints `Loaded songs: 20`, followed by
+   `Top recommendations:`. Scoring and ranking are not implemented yet,
+   so no recommendations are displayed.
 
 ### Running Tests
 
