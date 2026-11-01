@@ -1,62 +1,36 @@
-Implement the following agreed design for this project's simple content-based music recommender.
-
-First inspect the current source, tests, README, and any applicable project guidance. Keep the implementation small and understandable. This prompt authorizes the necessary implementation and focused tests; do not add a UI, new dependencies, machine learning, external services, or unrelated features.
+﻿Music recommender implementation plan
 
 Goal
-Load the catalog from data/songs.csv and recommend songs using only genre, mood, and energy. Reward closer matches to the user's preferences with a score from 0 to 10.
+Score every song in data/songs.csv against a taste profile, then return the top k recommendations with scores and explanations. See data_flow_uml.md for the flow.
 
-Scoring rule
-1. Genre (maximum 4 points):
-   - Exact match: 4 points.
-   - Related genre: 2 points.
-   - Otherwise: 0 points.
-   - The only related pair is pop <-> indie pop (symmetric).
-2. Mood (maximum 3 points):
-   - Exact match: 3 points.
-   - Related mood: 1.5 points.
-   - Otherwise: 0 points.
-   - Any two different moods in {chill, relaxed, focused} are related.
-3. Energy (maximum 3 points):
-   - energy_points = 3 * (1 - abs(song_energy - preferred_energy)).
-   - Both energy values must be finite numbers between 0 and 1 inclusive.
-   - Reject invalid energy values with a clear ValueError rather than silently clamping them.
+Input: taste profile
+user_prefs = {"genre": "pop", "mood": "happy", "energy": 0.80}
+k = 5  # Number of recommendations, not a scoring feature.
 
-Total score = genre_points + mood_points + energy_points.
-Exact and related points are alternatives, not cumulative bonuses. Normalize genre and mood labels by trimming whitespace and ignoring case. Do not infer additional related categories. This score measures preference match; it is not a probability of liking a song.
+Process: score each song
+- Genre: 4 points for an exact match, 2 for pop <-> indie pop, otherwise 0.
+- Mood: 3 points for an exact match, 1.5 for different moods in {chill, relaxed, focused}, otherwise 0.
+- Energy: 3 * (1 - abs(song_energy - preferred_energy)).
+- Total: genre + mood + energy points, out of 10. Exact and related points are alternatives.
+- Trim whitespace and ignore case when comparing genre and mood.
+- Energy values must be finite and between 0 and 1; raise ValueError otherwise.
+Only genre, mood, and energy affect the score. Other catalog features and likes_acoustic are unused; ID is only a tie-breaker.
 
-Ranking
-- Sort by total score descending.
-- Break total-score ties by smaller absolute energy difference.
-- Break remaining ties by lower numeric song ID.
-- Return the top k songs; return all available songs if k exceeds the catalog size.
-- Return an empty list for an empty catalog or k <= 0.
-- Rank using unrounded scores; round only for display.
+Output: top k recommendations
+Score the whole catalog before sorting by score descending, then energy difference ascending, then numeric ID ascending. Return the first k songs with their scores and explanations of the actual matches and energy comparison. Use unrounded scores for ranking and round only for display.
+Return an empty list for an empty catalog or k <= 0; return all songs if k exceeds the catalog size.
 
-Integrate with the existing code
-- Implement CSV loading in load_songs, converting ID to int and numeric musical attributes to floats.
-- Implement score_song(user_prefs, song) -> (float_score, list_of_reason_strings).
-- Implement recommend_songs(user_prefs, songs, k) -> a list of (song_dict, float_score, explanation_string) tuples.
-- Preserve the existing Song and UserProfile dataclasses and the Recommender class API used by the tests.
-- Recommender.recommend must use the same scoring and ranking rules and return Song objects.
-- Recommender.explain_recommendation must produce a meaningful explanation using the same scoring logic.
-- Share the scoring/ranking implementation between the dictionary and class APIs to avoid divergent behavior. Use small helpers or adapters rather than a broad redesign.
-- Map UserProfile.favorite_genre, favorite_mood, and target_energy to the functional API's genre, mood, and energy preferences.
-- Keep likes_acoustic for compatibility, but do not use it in scoring. Do not score tempo, valence, danceability, acousticness, artist, title, or ID; ID is only a final tie-breaker.
-- Make the documented command, python src/main.py from the project root, load the catalog and print actual recommendations with scores and explanations.
-- Explain exact, related, and nonmatching categories honestly, and include song energy versus preferred energy. For example: "Matches your pop genre and happy mood; energy 0.82 is close to your preferred 0.80."
-
-Acceptance examples
-For genre=pop, mood=happy, energy=0.80:
-- Sunrise City: 4 + 3 + 2.94 = 9.94 / 10.
-- Rooftop Lights: 2 + 3 + 2.88 = 7.88 / 10.
-- Gym Hero: 4 + 0 + 2.61 = 6.61 / 10.
-These three songs must rank in that order relative to each other.
+Implementation
+- load_songs: read the CSV, converting ID to int and musical numeric fields to floats.
+- score_song: return (score, list of reasons).
+- recommend_songs: return a list of (song, score, explanation) tuples.
+- Preserve Song, UserProfile, and Recommender. Reuse the same scoring and ranking logic for both APIs; Recommender.recommend returns Song objects.
+- Map favorite_genre, favorite_mood, and target_energy to genre, mood, and energy. Keep likes_acoustic for compatibility.
+- Have python src/main.py print the recommendations, and update the README to match.
 
 Verification
-Add focused tests for exact/related/unrelated categories, gradual energy scoring, the examples above (using approximate floating-point comparisons), ranking with deliberately shuffled input, both tie-breakers, empty input, k edge cases, invalid energy, CSV type conversion, and consistent results across the functional and class APIs. Check that explanations describe actual matches rather than returning placeholder text.
-Run the tests and the documented application command. If the Python environment prevents execution, report that limitation honestly instead of claiming the checks passed.
+For the profile above, Sunrise City scores 9.94, Rooftop Lights 7.88, and Gym Hero 6.61; preserve that relative order.
+Test category matches, energy scoring and validation, ranking and ties, empty input and k limits, CSV conversion, explanations, and consistency between APIs. Run the tests and app; report any checks that could not run.
 
-Documentation and scope
-Minimally update the README to describe the implemented scoring and remove its now-obsolete placeholder-output warning. Leave the personal reflection templates in model_card.md and ai_interactions.md for the user to complete. Do not change the dataset or add dependencies. Do not commit or push changes.
-
-When finished, summarize what changed, the observed sample output, which checks passed, and any remaining limitations.
+Scope
+Keep the existing structure and dependencies. Leave the dataset and personal reflection templates unchanged during implementation. Do not add a UI, machine learning, or external services. Do not commit or push.
