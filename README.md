@@ -17,7 +17,7 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-- **Planned design:** Match each song's genre, mood, and energy to the user's preferences.
+- **Scoring:** Match each song's genre, mood, and energy to the user's preferences.
 - **User profile:** Stores favorite genre, favorite mood, target energy, and an acoustic preference (unused in this scoring rule).
 - **Genre score:** 4 points for an exact match, 2 for related genres (pop and indie pop), otherwise 0.
 - **Mood score:** 3 points for an exact match, 1.5 for related moods (chill, relaxed, and focused), otherwise 0.
@@ -55,9 +55,10 @@ Run these commands from the project folder.
    python src/main.py
    ```
 
-   The app loads the CSV and prints `Loaded songs: 20`, followed by
-   `Top recommendations:`. Scoring and ranking are not implemented yet,
-   so no recommendations are displayed.
+   The app loads the CSV and prints `Loaded songs: 20`, followed by the top five
+   recommendations with scores and explanations. For the example profile, the
+   top three are Sunrise City (9.94), Rooftop Lights (7.88), and Gym Hero (6.61).
+   The functional API is implemented; the `Recommender` class remains a starter stub.
 
 ### Running Tests
 
